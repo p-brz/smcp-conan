@@ -1,0 +1,3 @@
+*.pyc
+conaninfo.txt
+conanbuildinfo.*
