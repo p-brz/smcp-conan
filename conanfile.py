@@ -1,12 +1,19 @@
 from conans import ConanFile, ConfigureEnvironment
+from conans.util.log import logger
 import os
+from os import path
 
 class SmcpConan(ConanFile):
     name = "smcp"
     version = "0.6.5"
     license = "MIT"
     settings = "os", "compiler", "build_type", "arch"
-
+    options = {
+        # Define DEBUG_VERBOSE to make smcp print debug messages during runtime
+        "verbose" : [True, False]
+    } 
+    default_options = "verbose=False"
+     
     #Url of package
     url="https://github.com/paulobrizolara/smcp-conan.git"
 
@@ -26,18 +33,37 @@ class SmcpConan(ConanFile):
         os.chdir("./smcp")
         self.run("git checkout %s" % self.RELEASE)
 
-    def build(self):
-        # This the where make will install the built library
-        install_path = self._make_install_path()
+    def config(self):
+        #TODO: allow to use more options from the configure script
 
-        #TODO: allow use more options from the configure script
-        configs = "--prefix=%s" % install_path
+        configs = []
+                    
+        if self.settings.build_type == "Debug":
+            configs.append("--enable-debug")
+        
+        if self.options.verbose:
+            self.deps_cpp_info.cflags.append("-DVERBOSE_DEBUG")
+            #configs.append("-DVERBOSE_DEBUG")
+                
+        self.configs = configs
+
+    def build(self):
+        if not hasattr(self, 'configs'):
+            self.config()
+
+        # This the directory where make will install the built library
+        install_path = self._make_install_path()
+        self.configs.append("--prefix=%s" % install_path)
 
         # Build the project
         env = ConfigureEnvironment(self.deps_cpp_info, self.settings)
-        self.run("%s ./smcp/configure %s" % (env.command_line, configs))
-        self.run("%s make" % env.command_line)
-        self.run("%s make install" % env.command_line)
+        env_cmd = env.command_line
+
+        configure_path = path.join(".", "smcp", "configure")
+
+        self.run("%s %s %s"         % (env_cmd, configure_path, " ".join(self.configs)))
+        self.run("%s make"          % env_cmd)
+        self.run("%s make install"  % env_cmd)
 
     def package(self):
         #Copy all install dir content to the package directory
