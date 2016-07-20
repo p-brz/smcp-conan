@@ -4,7 +4,7 @@ from shutil import copyfile
 
 username = os.getenv("CONAN_USERNAME", "paulobrizolara")
 channel = os.getenv("CONAN_CHANNEL", "testing")
-version = "0.6.5"
+version = "0.6.5-36-ge40a65f"
 
 class SmcpConanTest(ConanFile):
     settings = "os", "compiler", "build_type", "arch"

@@ -5,7 +5,7 @@ from os import path
 
 class SmcpConan(ConanFile):
     name = "smcp"
-    version = "0.6.5"
+    version = "0.6.5-36-ge40a65f" # from git describe
     license = "MIT"
     settings = "os", "compiler", "build_type", "arch"
     options = {
@@ -18,20 +18,14 @@ class SmcpConan(ConanFile):
     url="https://github.com/paulobrizolara/smcp-conan.git"
 
     #The smcp repository
-    REPO = "https://github.com/darconeous/smcp/"
-    #Release tag on repository
-    RELEASE = "0.6.5-release"
+    #REPO = "https://github.com/darconeous/smcp/"
+    REPO = "https://github.com/paulobrizolara/smcp/" #Using fork
+
+    #Point on repository history
+    COMMIT = "e40a65ff1"
 
     #Name of install directory
     INSTALL_DIR = 'install_dir'
-
-    def source(self):
-        # Clone the repository
-        self.run("git clone %s" % self.REPO)
-
-        #Move to the release tag on the cloned project
-        os.chdir("./smcp")
-        self.run("git checkout %s" % self.RELEASE)
 
     def config(self):
         #TODO: allow to use more options from the configure script
@@ -46,6 +40,18 @@ class SmcpConan(ConanFile):
             #configs.append("-DVERBOSE_DEBUG")
                 
         self.configs = configs
+
+
+    def source(self):
+        # Clone the repository
+        self.run("git clone %s" % self.REPO)
+
+        #Checkout history point of current version
+        os.chdir("smcp")
+        self.run("git checkout %s" % self.COMMIT)
+
+        if not path.exists("configure"):
+            self.run(path.join(".", "bootstrap.sh"))
 
     def build(self):
         if not hasattr(self, 'configs'):
